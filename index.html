@@ -1,7 +1,177 @@
 <!DOCTYPE html>
 <html>
-<head></head>
-<body>
-<h1>Hello world</h1>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <title>人狼web</title>
+    <script src='https://cdn.webrtc.ecl.ntt.com/skyway-latest.js' type='text/javascript'></script>
+    <script crossorigin='anonymous' integrity='sha256-DI6NdAhhFRnO2k51mumYeDShet3I8AKCQf/tf7ARNhI=' src='https://code.jquery.com/ui/1.11.4/jquery-ui.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js'></script>
+  </head>
+  <body>
+    <div class='div row'>
+      <div class='col-md-8 col-md-offset-1'>
+        <div class='alert alert-info' role='alert'>
+          <strong>お題:</strong>
+          <strong></strong>
+        </div>
+        <p>
+          制限時間
+          <span id='timer_s'>00</span>
+        </p>
+        <p><strong>条件:</strong>面白いこと
+        </p>
+        <p>
+          <strong>※ホワイトボードが結論として最終的に保存されます</strong>
+        </p>
+        <textarea id='white-bord' rows='10'></textarea>
+      </div>
+    </div>
+    <video id='my-video'></video>
+    <div id='peers'>
+      <p>参加者</p>
+    </div>
+    <!-- あとでファイル分ける -->
+    <!-- Button trigger modal -->
+    <a data-target='#exampleModal' data-toggle='modal' id='tri' type='button'></a>
+    <div aria-labelledby='exampleModalLabel' class='modal fade' id='exampleModal' role='dialog' tabindex='-1'>
+      <div class='modal-dialog' role='document'>
+        <div class='modal-content'>
+          <div class='modal-header'>
+            <button aria-label='Close' class='close' data-dismiss='modal' type='button'>
+              <span aria-hidden='true'>×</span>
+            </button>
+            <h4 class='modal-title' id='exampleModalLabel'>MVPを選ぼう</h4>
+          </div>
+          <div class='modal-body'>
+            <form>
+              <div class='form-group'>
+                <label class='control-label' for='recipient-name'>MVPを選択</label>
+                <input class='form-control' id='recipient-name' type='text'>
+              </div>
+              <div class='form-group'>
+                <label class='control-label' for='message-text'>今回のGDの感想・反省点</label>
+                <textarea class='form-control' id='message-text'></textarea>
+              </div>
+            </form>
+          </div>
+          <div class='modal-footer'>
+            <a href='/'>
+              <button class='btn btn-primary' type='button'>送信する</button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <script type="text/javascript">
+    /* eslint-disable require-jsdoc */
+    $(function() {
+      var roomName='#{@rule.id}';
+      // Peer object
+      var date = new Date() ;
+      var a = date.getTime() ;
+      var peer_count=0;
+      const peer = new Peer({
+        key:   "8cca2734-94ae-44fd-af8e-84a73633d9a4",
+        debug: 1
+      });
+      let localStream;
+      let room;
+      peer.on('open',function(){
+        navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
+          $('#my-video').get(0).srcObject = stream;
+          localStream = stream;
+          room=peer.joinRoom(roomName,{mode:"sfu",stream:localStream});
+          room.on('open',function(){
+            room.on("stream",function(stream){
+              stream_to_tag(stream);
+            })
+            room.on("data",function(data){
+              $("#white-bord").val(data.data.data);
+            })
+            $("#white-bord").keyup(function(){
+              var data=$("#white-bord").val();
+              room.send({label:"white-bord",data:data});
+            })
+            $("#my-video").click(function(){
+              var condition={width:100,height:100};
+              // 一回全部止める
+              localStream.getAudioTracks()[0].stop();
+              if(localStream.getVideoTracks()[0]){
+                localStream.getVideoTracks()[0].stop();
+                condition=false;
+              }
+              navigator.mediaDevices.getUserMedia({video:condition, audio:true }).then(stream => {
+                localStream=stream;
+                room.replaceStream(localStream);
+                $('#my-video').get(0).srcObject = localStream;
+              })
+            })
+            room.on("peerLeave",function(peerId){
+              $("video#"+peerId).hide();
+            })
+            room.on("peerJoin",function(peerId){
+              var data=$("#white-bord").val();
+              room.send({label:"white-bord",data:data});
+            })
+          })
+        })
+      })
+
+
+    function stream_to_tag(stream) {
+      if($("video#"+stream.peerId).length==0){
+        $video=$("<video>");
+        $("body").append($video);
+        $video.attr("src",window.URL.createObjectURL(stream));
+        $video.attr("id",stream.peerId);
+        $video.attr("class","other-peer");
+        $video.attr("autoplay",true);
+        // TODO: ここにユーザーのプロフィール画像が埋め込まれるようにする
+        $video.attr("poster","#{raw asset_path("rr.png")}");
+        $video.show();
+        var rgbColor = 'rgb(' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ')';
+        $video.css('border-color', rgbColor);
+        $video.draggable();
+        $pe=$("<p>"+stream.peerId+"</p>");
+        $("#peers").append($pe);
+        $pe.css('color', rgbColor);;
+      }else{
+        // すでにDOMがあるときはstreamを入れ替える
+        $("video#"+stream.peerId).attr("src",window.URL.createObjectURL(stream));
+      }
+    }
+
+
+    var m;
+    var s;
+    var remaining;
+
+
+
+    function countDown(){
+      m=parseInt($("#timer_m").text());
+      s=parseInt($("#timer_s").text());
+      remaining=m*60+s;
+      if(remaining>0){
+         if (s>0) {
+           s--;
+         }else{
+           s=59;
+           m--;
+         }
+         $("#timer_m").text(('00' + m).slice(-2));
+         $("#timer_s").text(('00' + s).slice(-2));
+      }else{
+        $("a#tri").click();
+        clearTimeout(set);
+      }
+    }
+    var set=setInterval(countDown,1000);
+    });
+
+    </script>
+  </body>
 </html>

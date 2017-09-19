@@ -7,7 +7,7 @@
     <script src='https://cdn.webrtc.ecl.ntt.com/skyway-latest.js' type='text/javascript'></script>
     <script crossorigin='anonymous' integrity='sha256-DI6NdAhhFRnO2k51mumYeDShet3I8AKCQf/tf7ARNhI=' src='https://code.jquery.com/ui/1.11.4/jquery-ui.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js'></script>
-    <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-color/2.1.2/jquery.color.js"></script>
 
 
 <!-- Latest compiled and minified CSS -->
@@ -38,7 +38,7 @@
          bottom:0px;
          width: 200px;
        }
-       #my-video{
+       .my-video{
          left:0px;
          height: 200px;
          width: 200px;
@@ -46,7 +46,17 @@
        #alert{
          text-align: center;
        }
-       .人狼,.占い師{
+       #peers{
+         position: absolute;
+         right:0px;
+         bottom:0px;
+         height: 200px;
+         width: 300px;
+       }
+       #select,#select_day{
+         width: 300px
+       }
+       .人狼,.占い師,.day{
          display: none;
        }
     </style>
@@ -56,28 +66,43 @@
 
 
   <body>
+    <br>
     <div class="alert alert-info" role="alert" id="alert">現在、準備中です</div>
-    <div class="progress">
-      <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%">
-        <span class="sr-only">40% Complete (success)</span>
-      </div>
-    </div>
-    <input id="room_id" class="owner"readonly></input>
-    <!-- コピーボタン -->
-    <button id="clip" class="btn owner" data-clipboard-target="#room_id">
-       クリックしてコピー
-    </button>
-    <p/>現在：昼<p>
-    <p>夜まで3:00</p>
-    <p>接続人数:<span id="p_c">1</span>人</p>
 
-    <button class="owner btn btn-info"type="button" name="button" id="start">ゲームスタート</button>
-    <input id="select" class="人狼 占い師"readonly>
-    <button class="人狼 btn btn-info"type="button" name="button">人狼</button>
-    <button class="占い師 btn btn-info"type="button" name="button">占い師</button>
+    <div class="start">
+      部屋の名前：<input id="room_id"></input><br>
+      自分の名前：<input id="nickname"></input><br>
+      <button class="btn btn-info"type="button" name="button" id="room_select">決定</button>
+    </div>
+
+    <div class="info">
+      <p/>現在：<span id="day_night">昼</span><p>
+      <p>接続人数:<span id="p_c">1</span>人</p>
+    </div>
+    <button class="disabled owner btn btn-info"type="button" name="button" id="start">ゲームスタート</button>
+
+    <div class="night">
+      <select id="select" class="人狼 占い師 form-control" >
+      </select>
+      <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
+      <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
+    </div>
+
+    <div class="day">
+      <select id="select_day" class="form-control" >
+      </select>
+      <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
+    </div>
+
     <div id='my-video_div'>
-      <p id="post_p">あなたの役職：<span id="post">未決定</span></p>
-      <video  id='my-video' autoplay muted></video>
+      <p>現在の部屋：<span id="room">未決定</span></p>
+      <p>あなたの名前：<span id="name">未決定</span></p>
+      <p>あなたの役職：<span id="post">未決定</span></p>
+      <video  class='my-video' autoplay muted></video>
+    </div>
+
+    <div id="peers">
+      <p>参加者一覧</p>
     </div>
 
 
@@ -87,113 +112,160 @@
 
     <script type="text/javascript">
 
-    // clipboard
-    $(function () {
-        var clipboard = new Clipboard('#clip');
-        clipboard.on('success', function(e) {
-          e.clearSelection();
-        });
-     });
-
-
-
-    /* eslint-disable require-jsdoc */
     $(function() {
-      var owner=true;
-      if (location.hash) {
-        var roomName=location.hash.replace( /#/g , "" );
-        $('.owner').hide();
-      }else{
-        var roomName=new Date().getTime();
-        $("#room_id").val(location.href+"#"+roomName);
 
-      }
+      $("#room_select").click(function(){
 
 
-      var peer_count=1;
-      const peer = new Peer({
-        key:   "8cca2734-94ae-44fd-af8e-84a73633d9a4",
-        debug: 3
-      });
-      let localStream;
-      let room;
-      var posts;
-      var my_post;
-      peer.on('open',function(){
-        navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
-          $('#my-video').get(0).srcObject = stream;
-          localStream = stream;
-          room=peer.joinRoom(roomName,{mode:"sfu",stream:localStream});
-          room.on('open',function(){
-            //  スタートボタン
-            $("#start").click(function(){
-              $(this).hide();
-              var members=room.members;
-              // 役職決定
-              posts=set_posts(peer_count);
-              // 自分は先頭
-              my_post=posts[0];
-              $("#post").text(my_post);
-              // みんなに送る
-              for (var i = 0; i < peer_count-1; i++) {
-                room.send({label:members[i],data:posts[i+1]});
-              }
+        if ($("#room_id").val()=="" || $("#nickname").val()=="") {
+          alert("入力してください");
+          return 0;
+        }
 
-              chagen_and_send_alert(room,"ゲームが開始されました。今回の役職を確認してください");
-              Night(room,my_post);
-            })
+        $(".start").hide();
+        $("#room").text($("#room_id").val());
+        $("#name").text($("#nickname").val());
 
-            room.on("stream",function(stream){
-              stream_to_tag(stream);
-            })
-            room.on("data",function(data){
-              if (data.data.label=="peer_count") {
-                peer_count=data.data.data;
-                $("#p_c").text(peer_count);
-              }else if(data.data.label=="alert"){
-                $("#alert").text(data.data.data);
-              }else if(data.data.label==peer.id){
-                my_post=data.data.data;
-                $("#post").text(my_post);
-                Night(room,my_post);
-              }
-            })
 
-            $("#my-video").click(function(){
-              var condition={width:100,height:100};
-              // 一回全部止める
-              localStream.getAudioTracks()[0].stop();
-              if(localStream.getVideoTracks()[0]){
-                localStream.getVideoTracks()[0].stop();
-                condition=false;
-              }
-              navigator.mediaDevices.getUserMedia({video:condition, audio:true }).then(stream => {
-                localStream=stream;
-                room.replaceStream(localStream);
-                $('#my-video').get(0).srcObject = localStream;
+        var roomName=$("#room_id").val();
+        const peer = new Peer($("#nickname").val(),{
+          key:   "8cca2734-94ae-44fd-af8e-84a73633d9a4",
+          debug: 1
+        });
+        let localStream;
+        let room;
+        var posts;
+        var members=[];
+        var night_end_count=0;
+
+
+        peer.on('open',function(){
+          navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
+            $('.my-video').get(0).srcObject = stream;
+            $('.my-video').attr("id",peer.id);
+            localStream = stream;
+            room=peer.joinRoom(roomName,{mode:"sfu",stream:localStream});
+            room.on('open',function(){
+              //  スタートボタン
+              $("#start").click(function(){
+                $(this).hide();
+                // 役職決定
+                posts=set_posts(members.length+1);
+                // 自分は先頭
+                peer.post=posts[0];
+                $("#post").text(peer.post);
+                room.peers={[peer.id]:{"post":peer.post}};
+                for (var i = 0; i < members.length; i++) {
+                  room.peers[members[i]]={"post":posts[i+1]};
+                }
+                room.send({label:"peers",data:room.peers});
+                room.day=0;
+                room.send({label:"day",data:room.day});
+
+                change_and_send_alert(room,"ゲームが開始されました。今回の役職を確認してください");
+                room.send({label:"startNight",data:"a"});
+                Night(room,peer);
               })
-            })
 
-            room.on("peerLeave",function(peerId){
-              peer_count--;
-              $("#p_c").text(peer_count);
+              room.on("stream",function(stream){
+                members.push(stream.peerId);
+                $("#p_c").text(members.length+1);
+                if (members.length>2) {
+                  $("#start").removeClass("disabled");
+                }
+                stream_to_tag(stream);
+              })
+              room.on("data",function(data){
+                if(data.data.label=="alert"){
+                  $("#alert").text(data.data.data);
+                }else if(data.data.label=="night_end_count"){
+                  night_end_count++;
+                  if (night_end_count==Object.keys(room.peers).length-1 && peer.end) {
+                    room.day++;
+                    room.send({label:"day",data:room.day});
 
-              $("video#"+peerId).hide();
-            })
-            room.on("peerJoin",function(peerId){
-              peer_count++;
-              $("#p_c").text(peer_count);
-              room.send({label:"peer_count",data:peer_count});
+                    room.send({label:"startDay",data:""});
+                    change_and_send_alert(room,"お昼になりました。容疑者をえらびましょう");
+                    Day(room,peer);
+                    night_end_count=0;
+                  }
+                }else if(data.data.label=="day_end_count"){
+                  day_end_count++;
+                  if (day_end_count==Object.keys(room.peers).length-1 && peer.end) {
+                    var max=0;
+                    var dead_key="";
+                    Object.keys(room.kill_peer).forEach(function (key) {
+                      if (room.kill_peer[key]>=max) {
+                        max=room.kill_peer[key];
+                        dead_key=key;
+                      }
+                    });
+                    room.peers[dead_key].dead=true;
+                    room.send({label:"peers",data:room.peers});
+
+                    Night(room,peer);
+                    room.send({label:"startNight",data:""});
+                    day_end_count=0;
+                  }
+                }else if(data.data.label=="kill_peer"){
+                  room.kill_peer[data.data.data]++;
+                }else if(data.data.label=="startDay"){
+                  Day(room,peer);
+                  night_end_count=0;
+                }else if(data.data.label=="startNight"){
+                  Night(room,peer);
+                  day_end_count=0;
+                }else{
+                  room[data.data.label]=data.data.data;
+                }
+                if (data.data.label=="day") {
+                  if (data.data.data==0) {
+                    $("#start").hide();
+                    peer.post=room.peers[peer.id].post;
+                    $("#post").text(peer.post);
+                  }else{
+                    room.day=data.data.data;
+                  }
+                }
+              })
+
+              $(".my-video").click(function(){
+                var condition={width:100,height:100};
+                // 一回全部止める
+                localStream.getAudioTracks()[0].stop();
+                if(localStream.getVideoTracks()[0]){
+                  localStream.getVideoTracks()[0].stop();
+                  condition=false;
+                }
+                navigator.mediaDevices.getUserMedia({video:condition, audio:true }).then(stream => {
+                  localStream=stream;
+                  room.replaceStream(localStream);
+                  $('.my-video').get(0).srcObject = localStream;
+                })
+              })
+
+              room.on("peerLeave",function(peerId){
+                members.splice(members.indexOf(peerId),1);
+                $("#p_c").text(members.length+1);
+                $("p#"+peerId).remove();
+                $("video#"+peerId).remove();
+              })
+              room.on("peerJoin",function(peerId){
+              })
             })
           })
         })
       })
 
-    function chagen_and_send_alert(room,text) {
+
+
+
+
+
+    function change_and_send_alert(room,text) {
       $("#alert").text(text);
       room.send({label:"alert",data:text});
     }
-
 
     function stream_to_tag(stream) {
       if($("video#"+stream.peerId).length==0){
@@ -209,6 +281,7 @@
         $video.css('border-color', rgbColor);
         $video.draggable();
         $pe=$("<p>"+stream.peerId+"</p>");
+        $pe.attr("id",stream.peerId);
         $("#peers").append($pe);
         $pe.css('color', rgbColor);;
       }else{
@@ -217,14 +290,100 @@
       }
     }
 
-    function Night(room,post) {
-      $("."+post).show();
-      $(document).on('click','video.other-peer',function(){
-        $("#select").val($(this).attr("id"));
+    function set_select_box(peers,selecter) {
+      $(selecter).empty();
+      Object.keys(peers).forEach(function (key) {
+        $(selecter).append("<option value='"+key+"'>"+key+"</option>");
       });
     }
-    function Day(room) {
 
+    function getDeadPeer(room) {
+      Object.keys(room.peers).forEach(function (key) {
+        if (room.peers[key].dead) {
+          return key;
+        }
+      });
+      return false;
+    }
+
+    function Night(room,peer) {
+      set_select_box(room.peers,"#select");
+      // 選択肢から自分を除く
+      $("#select > [value="+peer.id+"]").remove();
+
+      $("body").animate(
+        {'color': 'white',
+          'backgroundColor': 'black'
+        }, 1500
+      );
+      $("#day_night").text("夜");
+
+      if (peer.post=="人狼") {
+        $("#alert").text("人狼以外は映像・音声が見えません。食べる相手を選びましょう");
+        Object.keys(room.peers).forEach(function (key) {
+          if (room.peers[key].post!="人狼") {
+            $("video#"+key).hide();
+            $("video#"+key).attr("muted","");
+          }
+        });
+      }else{
+        $("#alert").text("夜になりました。");
+        $("video.other-peer").hide();
+        $("video.other-peer").attr("muted","");
+      }
+      if (room.day>0) {
+        $("."+peer.post).show();
+        $("button.占い師").click(function(){
+          $(this).hide();
+          alert(room.peers[$("#select").val()].post);
+          room.send({label:"night_end_count",data:peer.id});
+          peer.end=true;
+        })
+
+        $("button.人狼").click(function(){
+          $(this).hide();
+          room.peers[$("#select").val()].dead=true;
+          room.send({label:"peers",data:room.peers});
+          room.send({label:"night_end_count",data:peer.id});
+          peer.end=true;
+        })
+      }else{
+        peer.end=true;
+        setTimeout(room.send({label:"night_end_count",data:peer.id}), 10*1000);
+      }
+    }
+    function Day(room,peer) {
+      peer.end=false;
+      $(".day").show();
+      $("#day_night").text("昼");
+      $("body").animate(
+        {'color': 'black',
+          'backgroundColor': 'white'
+        }, 1500
+      );
+
+      var dead_peer=getDeadPeer(room);
+      if (dead_peer) {
+        alert(dead_peer+"が殺された");
+        delete room.peers.dead_peer;
+        $("video#"+dead_peer).addClass("dead");
+        $("video#"+dead_peer).attr("muted","");
+      }
+      room.kill_peer={};
+      Object.keys(room.peers).forEach(function (key) {
+        room.kill_peer[key]=0;
+        $("video#"+key).show();
+        $("video#"+key).attr("muted","false");
+      });
+      set_select_box(room.peers,"#select_day");
+
+      $("#kill_peer").click(function(){
+        $(".day").hide();
+        room.kill_peer[$("#select").val()]=1;
+        room.send({label:"kill_peer",data:$("#select").val()});
+        room.send({label:"day_end_count",data:peer.id});
+        peer.end=true;
+      })
     }
 
     function set_posts(int) {
@@ -245,31 +404,7 @@
       }
       return res;
     }
-    var m;
-    var s;
-    var remaining;
 
-
-
-    function countDown(){
-      m=parseInt($("#timer_m").text());
-      s=parseInt($("#timer_s").text());
-      remaining=m*60+s;
-      if(remaining>0){
-         if (s>0) {
-           s--;
-         }else{
-           s=59;
-           m--;
-         }
-         $("#timer_m").text(('00' + m).slice(-2));
-         $("#timer_s").text(('00' + s).slice(-2));
-      }else{
-        $("a#tri").click();
-        clearTimeout(set);
-      }
-    }
-    var set=setInterval(countDown,1000);
     });
 
     </script>

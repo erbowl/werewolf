@@ -190,18 +190,12 @@
                   $("#alert").text(data.data.data);
                 }else if(data.data.label=="night_end_count"){
                   peer.night_end_count++;
-                  if (room.peers[data.src].post=="人狼") {
+                  if (room.peers[data.src].post=="人狼" && peer.post=="人狼") {
                     $(".人狼").hide();
                   }
 
-
-                    console.log(peer.night_end_count);
-                    console.log(Object.keys(room.peers).length);
-                    console.log(data.src);
-
                   if (peer.night_end_count==Object.keys(room.peers).length && peer.end) {
-                    console.log("俺が次に行く");
-                    alert("俺が次に行く");
+
                     room.day++;
                     room.send({label:"day",data:room.day});
                     room.send({label:"startDay",data:""});

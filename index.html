@@ -194,12 +194,14 @@
                     $(".人狼").hide();
                   }
 
-                  if (peer.post=="人狼") {
-                    alert(peer.night_end_count);
-                    alert(Object.keys(room.peers).length);
-                  }
+
+                    console.log(peer.night_end_count);
+                    console.log(Object.keys(room.peers).length);
+                    console.log(data.src);
 
                   if (peer.night_end_count==Object.keys(room.peers).length && peer.end) {
+                    console.log("俺が次に行く");
+                    alert("俺が次に行く");
                     room.day++;
                     room.send({label:"day",data:room.day});
                     room.send({label:"startDay",data:""});
@@ -220,6 +222,7 @@
                     room.peers[dead_key].dead=true;
                     // room.send({label:"peers",data:room.peers});
                     room.send({label:"startNight",data:room.peers});
+                    peer.night_end_count=0;
                     Night(room,peer);
                     day_end_count=0;
                   }
@@ -230,6 +233,7 @@
                   peer.night_end_count=0;
                 }else if(data.data.label=="startNight"){
                   room.peers=data.data.data;
+                  peer.night_end_count=0;
                   Night(room,peer);
                   day_end_count=0;
                 }else{
@@ -363,7 +367,6 @@
         return 0;
       }
       $("#alert").text("夜になりました。");
-      debugger;
       peer.end=false;
 
       room.kill_peer=undefined;

@@ -56,7 +56,7 @@
        #select,#select_day{
          width: 300px
        }
-       .人狼,.占い師,.day,#dead{
+       .人狼,.占い師,.騎士,.day,#dead{
          display: none;
        }
        .dead{
@@ -72,7 +72,7 @@
     <br>
     <div class="alert alert-info" role="alert" id="alert">現在、準備中です</div>
     <div class="start">
-      部屋の名前：<input pattern="^[0-9A-Za-z]+$"id="room_id"><br>
+      部屋の名前：<input value="1" pattern="^[0-9A-Za-z]+$"id="room_id"><br>
       自分の名前：<input pattern="^[A-Za-z]+$"id="nickname"><br>
       <input type="submit" class="btn btn-info"name=""id="room_select" value="決定">
       <!-- <button class="btn btn-info"type="submit" name="button" id="room_select">決定</button> -->
@@ -84,10 +84,11 @@
     <button class="disabled owner btn btn-info"type="button" name="button" id="start">ゲームスタート</button>
     <div id="day_and_night">
       <div class="night">
-        <select id="select" class="人狼 占い師 form-control" >
+        <select id="select" class="人狼 占い師 騎士 form-control" >
         </select>
         <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
         <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
+        <button class="騎士 btn btn-info"type="button" name="button">を守る</button>
       </div>
       <div class="day">
         <select id="select_day" class="form-control" >
@@ -139,15 +140,16 @@
         var roomName=$("#room_id").val();
         const peer = new Peer($("#nickname").val(),{
           key:   "8cca2734-94ae-44fd-af8e-84a73633d9a4",
-          debug: 1
+          debug: 3
         });
         let localStream;
         let room;
         var posts;
         var members=[];
-        var day_end_count=0;
         peer.isDay=true;
-        peer.night_end_count=0;
+        peer.night_end_count=[];
+        peer.day_end_count=[];
+
 
         peer.on('open',function(){
           navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
@@ -155,6 +157,7 @@
             // $('.my-video').attr("id",peer.id);
             localStream = stream;
             room=peer.joinRoom(roomName,{mode:"sfu",stream:localStream});
+            room.game={};
             room.on('open',function(){
               //  スタートボタン
               $("#start").click(function(){
@@ -164,16 +167,15 @@
                 // 自分は先頭
                 peer.post=posts[0];
                 $("#post").text(peer.post);
-                room.peers={[peer.id]:{"post":peer.post}};
+                room.game.peers={[peer.id]:{"post":peer.post}};
                 for (var i = 0; i < members.length; i++) {
-                  room.peers[members[i]]={"post":posts[i+1]};
+                  room.game.peers[members[i]]={"post":posts[i+1]};
                 }
-                room.send({label:"peers",data:room.peers});
-                room.day=0;
-                room.send({label:"day",data:room.day});
-
+                // room.send({label:"peers",data:room.game.peers});
+                room.game.day=0;
+                // room.send({label:"day",data:room.game.day});
                 change_and_send_alert(room,"ゲームが開始されました。今回の役職を確認してください");
-                room.send({label:"startNight",data:room.peers});
+                room.send({label:"startNight",data:room.game});
                 Night(room,peer);
               })
 
@@ -189,59 +191,66 @@
                 if(data.data.label=="alert"){
                   $("#alert").text(data.data.data);
                 }else if(data.data.label=="night_end_count"){
-                  peer.night_end_count++;
-                  if (room.peers[data.src].post=="人狼" && peer.post=="人狼") {
+                  if (peer.night_end_count.indexOf(data.data.data)==-1) {
+                    peer.night_end_count.push(data.data.data);
+                  }
+                  if (room.game.peers[data.src].post=="人狼" && peer.post=="人狼") {
                     $(".人狼").hide();
                   }
 
-                  if (peer.night_end_count==Object.keys(room.peers).length && peer.end) {
+                  if (peer.night_end_count.length==Object.keys(room.game.peers).length && peer.end) {
+                    room.game.day++;
+                    // ↓はちょっと頑張ればいらない
+                    room.send({label:"day",data:room.game.day});
 
-                    room.day++;
-                    room.send({label:"day",data:room.day});
-                    room.send({label:"startDay",data:""});
+                    room.send({label:"startDay",data:room.game});
                     Day(room,peer);
-                    peer.night_end_count=0;
+                    peer.night_end_count=[];
                   }
                 }else if(data.data.label=="day_end_count"){
-                  day_end_count++;
-                  if (day_end_count==Object.keys(room.peers).length-1 && peer.end) {
+                  peer.day_end_count.push(data.data.data);
+                  if (peer.day_end_count.length==Object.keys(room.game.peers).length && peer.end) {
                     var max=0;
                     var dead_key="";
-                    Object.keys(room.kill_peer).forEach(function (key) {
-                      if (room.kill_peer[key]>=max) {
-                        max=room.kill_peer[key];
+                    Object.keys(room.game.kill_peer).forEach(function (key) {
+                      if (room.game.kill_peer[key]>=max) {
+                        max=room.game.kill_peer[key];
                         dead_key=key;
                       }
                     });
-                    room.peers[dead_key].dead=true;
-                    // room.send({label:"peers",data:room.peers});
-                    room.send({label:"startNight",data:room.peers});
-                    peer.night_end_count=0;
+                    room.game["dead"]=dead_key;
+                    room.send({label:"startNight",data:room.game});
+
+                    peer.night_end_count=[];
+
                     Night(room,peer);
-                    day_end_count=0;
+                    peer.isDay=false;
+
+                    peer.day_end_count=[];
                   }
                 }else if(data.data.label=="kill_peer"){
-                  room.kill_peer[data.data.data]++;
-                }else if(data.data.label=="startDay"){
+                  room.game.kill_peer[data.data.data]++;
+                }else if(data.data.label=="startDay" && !peer.isDay){
+                  peer.isDay=true;
+                  room.game=data.data.data;
                   Day(room,peer);
-                  peer.night_end_count=0;
-                }else if(data.data.label=="startNight"){
-                  room.peers=data.data.data;
-                  peer.night_end_count=0;
-                  Night(room,peer);
-                  day_end_count=0;
-                }else{
-                  room[data.data.label]=data.data.data;
-                }
-                if (data.data.label=="day") {
-                  if (data.data.data==0) {
+                  peer.night_end_count=[];
+                }else if(data.data.label=="startNight" && peer.isDay){
+                  peer.isDay=false;
+                  room.game=data.data.data;
+                  if (room.game.day==0) {
                     $("#start").hide();
-                    room.day=0;
-                    peer.post=room.peers[peer.id].post;
+                    peer.post=room.game.peers[peer.id].post;
                     $("#post").text(peer.post);
-                  }else{
-                    room.day=data.data.data;
                   }
+                  peer.night_end_count=[];
+                  Night(room,peer);
+                  peer.day_end_count=[];
+                }
+
+                if (/^add_.*$/.test(data.data.label)) {
+                  var key=data.data.label.replace( /add_/g , "");
+                  room.game[key]=data.data.data;
                 }
               })
 
@@ -314,14 +323,8 @@
     }
 
     function getDeadPeer(room) {
-      var res;
-      Object.keys(room.peers).forEach(function (key) {
-        if (room.peers[key].dead) {
-          res= key;
-        }
-      });
-      if (res) {
-        return res;
+      if (room.game.dead && !room.game.guard) {
+        return room.game.dead;
       }else{
         return false;
       }
@@ -350,11 +353,6 @@
     }
 
     function Night(room,peer) {
-      if (!peer.isDay) {
-        return 0;
-      }else{
-        peer.isDay=false;
-      }
       ViewChange("夜");
       if (peer.dead) {
         peer.end=true;
@@ -363,12 +361,12 @@
       $("#alert").text("夜になりました。");
       peer.end=false;
 
-      room.kill_peer=undefined;
-      delete room.kill_peer;
+      room.game.kill_peer=undefined;
+
       var dead_peer=getDeadPeer(room);
       if (dead_peer){
-        delete room.peers[dead_peer];
-        room.send({label:"peers",data:room.peers});
+        delete room.game.peers[dead_peer];
+        // room.send({label:"peers",data:room.game.peers});
         if (dead_peer==peer.id) {
           $("#alert").text("多数決の結果、あなたは殺されました");
           dead_mode();
@@ -382,45 +380,53 @@
         }
       }
 
-      set_select_box(room.peers,"#select");
+      set_select_box(room.game.peers,"#select");
       // 選択肢から自分を除く
       $("#select > [value="+peer.id+"]").remove();
 
-      Object.keys(room.peers).forEach(function (key) {
+      Object.keys(room.game.peers).forEach(function (key) {
         // 自分と相手が人狼同士以外は隠す
-        if (!(peer.post=="人狼" && room.peers[key].post=="人狼")) {
+        if (!(peer.post=="人狼" && room.game.peers[key].post=="人狼")) {
           $("video#"+key).hide();
           $("video#"+key).attr("muted","");
         }
       });
 
 
-      if (room.day>0 || peer.post=="占い師") {
-        if (peer.post=="占い師" ||peer.post=="人狼") {
+      if (room.game.day>0 || peer.post=="占い師") {
+        if (["占い師","人狼","騎士"].indexOf(peer.post) >= 0) {
           $("."+peer.post).show();
           $("button.占い師").click(function(){
             $(".night").hide();
-            alert(room.peers[$("#select").val()].post);
+            alert(room.game.peers[$("#select").val()].post);
             room.send({label:"night_end_count",data:peer.id});
-            peer.night_end_count++;
+            peer.night_end_count.push(peer.id);
             peer.end=true;
           })
           $("button.人狼").click(function(){
             $(".night").hide();
-            room.peers[$("#select").val()].dead=true;
-            room.send({label:"peers",data:room.peers});
+            room.game["dead"]=$("#select").val();
+            room.send({label:"add_dead",data:room.game["dead"]});
             room.send({label:"night_end_count",data:peer.id});
-            peer.night_end_count++;
+            peer.night_end_count.push(peer.id);
+            peer.end=true;
+          })
+          $("button.騎士").click(function(){
+            $(".night").hide();
+            room.game["guard"]=$("#select").val();
+            room.send({label:"add_guard",data:room.game["guard"]});
+            room.send({label:"night_end_count",data:peer.id});
+            peer.night_end_count.push(peer.id);
             peer.end=true;
           })
         }else{
           peer.end=true;
-          peer.night_end_count++;
+          peer.night_end_count.push(peer.id);
           setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
         }
       }else{
         peer.end=true;
-        peer.night_end_count++;
+        peer.night_end_count.push(peer.id);
         setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
       }
 
@@ -433,17 +439,12 @@
     }
 
     function Day(room,peer) {
-      if (peer.isDay) {
-        return 0;
-      }else{
-        peer.isDay=true;
-      }
       ViewChange("昼");
       peer.end=false;
 
       var dead_peer=getDeadPeer(room);
       if (dead_peer) {
-        delete room.peers[dead_peer];
+        delete room.game.peers[dead_peer];
         if (dead_peer==peer.id) {
           $("#alert").text("あなたは人狼に殺されました");
           dead_mode();
@@ -453,16 +454,16 @@
           $("video#"+dead_peer).addClass("dead");
           $("video#"+dead_peer).attr("muted","");
         }
+      }else{
+        $("#alert").text("昨晩の死者はいませんでした。殺すものを決めましょう。");
       }
 
-      if (end_judge(room.peers)) {
-        $("#alert").text(end_judge(room.peers));
+      if (end_judge(room.game.peers)) {
+        $("#alert").text(end_judge(room.game.peers));
         $("#day_and_night").remove();
         $("video").show();
         $("video").attr("muted",false);
         return 0;
-      }else{
-        $("#alert").text("容疑者を全員一致で決めてください");
       }
 
       if (peer.dead) {
@@ -471,28 +472,25 @@
       }
 
 
-      if (room.kill_peer==undefined) {
-        room.kill_peer={};
-        Object.keys(room.peers).forEach(function (key) {
-          room.kill_peer[key]=0;
+      if (room.game.kill_peer==undefined) {
+        room.game.kill_peer={};
+        Object.keys(room.game.peers).forEach(function (key) {
+          room.game.kill_peer[key]=0;
         });
       }
-
-      Object.keys(room.peers).forEach(function (key) {
+      Object.keys(room.game.peers).forEach(function (key) {
         $("video#"+key).show();
         $("video#"+key).attr("muted","false");
       });
-      set_select_box(room.peers,"#select_day");
+
+      set_select_box(room.game.peers,"#select_day");
       $("#select_day > [value="+peer.id+"]").remove();
-
-
-
-
 
       $("#kill_peer").click(function(){
         $(".day").hide();
-        room.kill_peer[$("#select_day").val()]++;
+        room.game.kill_peer[$("#select_day").val()]++;
         room.send({label:"kill_peer",data:$("#select_day").val()});
+        peer.day_end_count.push(peer.id);
         room.send({label:"day_end_count",data:peer.id});
         peer.end=true;
       })
@@ -518,12 +516,12 @@
     }
 
     function set_posts(int) {
-      var res=["占い師","人狼"];
-      if (int>5) {
+      var res=["占い師","人狼","騎士"];
+      int-=3;
+      if (int>=4) {
         res.push(["人狼","狂人"]);
         int-=2;
       }
-      int-=2;
       for (var i = 0; i < int; i++) {
         res.push("村人");
       }

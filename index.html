@@ -193,10 +193,15 @@
                   if (room.peers[data.src].post=="人狼") {
                     $(".人狼").hide();
                   }
+
+                  if (peer.post=="人狼") {
+                    alert(peer.night_end_count);
+                    alert(Object.keys(room.peers).length);
+                  }
+
                   if (peer.night_end_count==Object.keys(room.peers).length && peer.end) {
                     room.day++;
                     room.send({label:"day",data:room.day});
-
                     room.send({label:"startDay",data:""});
                     Day(room,peer);
                     peer.night_end_count=0;

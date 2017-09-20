@@ -145,12 +145,12 @@
         let room;
         var posts;
         var members=[];
-        var night_end_count=0;
         var day_end_count=0;
         peer.isDay=true;
+        peer.night_end_count=0;
 
         peer.on('open',function(){
-          navigator.mediaDevices.getUserMedia({video:{width:20,height:20}, audio:true }).then(stream => {
+          navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
             $('.my-video').get(0).srcObject = stream;
             // $('.my-video').attr("id",peer.id);
             localStream = stream;
@@ -173,7 +173,7 @@
                 room.send({label:"day",data:room.day});
 
                 change_and_send_alert(room,"ゲームが開始されました。今回の役職を確認してください");
-                room.send({label:"startNight",data:"a"});
+                room.send({label:"startNight",data:room.peers});
                 Night(room,peer);
               })
 
@@ -189,25 +189,23 @@
                 if(data.data.label=="alert"){
                   $("#alert").text(data.data.data);
                 }else if(data.data.label=="night_end_count"){
-                  night_end_count++;
-                  console.log(night_end_count,room.peers);
+                  peer.night_end_count++;
                   if (room.peers[data.src].post=="人狼") {
                     $(".人狼").hide();
                   }
-                  if (night_end_count==Object.keys(room.peers).length-1 && peer.end) {
+                  if (peer.night_end_count==Object.keys(room.peers).length && peer.end) {
                     room.day++;
                     room.send({label:"day",data:room.day});
 
                     room.send({label:"startDay",data:""});
                     Day(room,peer);
-                    night_end_count=0;
+                    peer.night_end_count=0;
                   }
                 }else if(data.data.label=="day_end_count"){
                   day_end_count++;
                   if (day_end_count==Object.keys(room.peers).length-1 && peer.end) {
                     var max=0;
                     var dead_key="";
-                    console.log(room.kill_peer);
                     Object.keys(room.kill_peer).forEach(function (key) {
                       if (room.kill_peer[key]>=max) {
                         max=room.kill_peer[key];
@@ -215,19 +213,18 @@
                       }
                     });
                     room.peers[dead_key].dead=true;
-                    room.send({label:"peers",data:room.peers});
-
+                    // room.send({label:"peers",data:room.peers});
+                    room.send({label:"startNight",data:room.peers});
                     Night(room,peer);
-                    room.send({label:"startNight",data:""});
                     day_end_count=0;
                   }
                 }else if(data.data.label=="kill_peer"){
                   room.kill_peer[data.data.data]++;
-                  console.log(room,data);
                 }else if(data.data.label=="startDay"){
                   Day(room,peer);
-                  night_end_count=0;
+                  peer.night_end_count=0;
                 }else if(data.data.label=="startNight"){
+                  room.peers=data.data.data;
                   Night(room,peer);
                   day_end_count=0;
                 }else{
@@ -366,12 +363,9 @@
 
       room.kill_peer=undefined;
       delete room.kill_peer;
-
-
       var dead_peer=getDeadPeer(room);
       if (dead_peer){
         delete room.peers[dead_peer];
-        console.log(dead_peer,room.peers);
         room.send({label:"peers",data:room.peers});
         if (dead_peer==peer.id) {
           $("#alert").text("多数決の結果、あなたは殺されました");
@@ -406,6 +400,7 @@
             $(".night").hide();
             alert(room.peers[$("#select").val()].post);
             room.send({label:"night_end_count",data:peer.id});
+            peer.night_end_count++;
             peer.end=true;
           })
           $("button.人狼").click(function(){
@@ -413,14 +408,17 @@
             room.peers[$("#select").val()].dead=true;
             room.send({label:"peers",data:room.peers});
             room.send({label:"night_end_count",data:peer.id});
+            peer.night_end_count++;
             peer.end=true;
           })
         }else{
           peer.end=true;
+          peer.night_end_count++;
           setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
         }
       }else{
         peer.end=true;
+        peer.night_end_count++;
         setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
       }
 
@@ -449,15 +447,13 @@
           dead_mode();
           peer.dead=true;
         }else{
-          alert(dead_peer+"が殺された");
-          console.log(dead_peer+"が殺された");
+          $("#alert").text(dead_peer+"は人狼に殺されました");
           $("video#"+dead_peer).addClass("dead");
           $("video#"+dead_peer).attr("muted","");
         }
       }
 
       if (end_judge(room.peers)) {
-        console.log("げーむ終了");
         $("#alert").text(end_judge(room.peers));
         $("#day_and_night").remove();
         $("video").show();
@@ -541,5 +537,6 @@
     });
 
     </script>
+
   </body>
 </html>

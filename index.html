@@ -56,8 +56,11 @@
        #select,#select_day{
          width: 300px
        }
-       .人狼,.占い師,.day{
+       .人狼,.占い師,.day,#dead{
          display: none;
+       }
+       .dead{
+         opacity: 0.2;
        }
     </style>
   </head>
@@ -68,31 +71,34 @@
   <body>
     <br>
     <div class="alert alert-info" role="alert" id="alert">現在、準備中です</div>
-
     <div class="start">
-      部屋の名前：<input id="room_id"></input><br>
-      自分の名前：<input id="nickname"></input><br>
-      <button class="btn btn-info"type="button" name="button" id="room_select">決定</button>
+      部屋の名前：<input pattern="^[0-9A-Za-z]+$"id="room_id"><br>
+      自分の名前：<input pattern="^[A-Za-z]+$"id="nickname"><br>
+      <input type="submit" class="btn btn-info"name=""id="room_select" value="決定">
+      <!-- <button class="btn btn-info"type="submit" name="button" id="room_select">決定</button> -->
     </div>
-
     <div class="info">
       <p/>現在：<span id="day_night">昼</span><p>
       <p>接続人数:<span id="p_c">1</span>人</p>
     </div>
     <button class="disabled owner btn btn-info"type="button" name="button" id="start">ゲームスタート</button>
-
-    <div class="night">
-      <select id="select" class="人狼 占い師 form-control" >
-      </select>
-      <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
-      <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
+    <div id="day_and_night">
+      <div class="night">
+        <select id="select" class="人狼 占い師 form-control" >
+        </select>
+        <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
+        <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
+      </div>
+      <div class="day">
+        <select id="select_day" class="form-control" >
+        </select>
+        <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
+      </div>
+    </div>
+    <div id="dead">
+      <p>死亡</p>
     </div>
 
-    <div class="day">
-      <select id="select_day" class="form-control" >
-      </select>
-      <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
-    </div>
 
     <div id='my-video_div'>
       <p>現在の部屋：<span id="room">未決定</span></p>
@@ -120,6 +126,9 @@
         if ($("#room_id").val()=="" || $("#nickname").val()=="") {
           alert("入力してください");
           return 0;
+        }else if (!/^[a-zA-Z][a-zA-Z0-9]+$/.test($("#nickname").val())) {
+          alert("ニックネームには半角英字のみ使用可能です");
+          return 0;
         }
 
         $(".start").hide();
@@ -137,12 +146,13 @@
         var posts;
         var members=[];
         var night_end_count=0;
-
+        var day_end_count=0;
+        peer.isDay=true;
 
         peer.on('open',function(){
-          navigator.mediaDevices.getUserMedia({video:{width:100,height:100}, audio:true }).then(stream => {
+          navigator.mediaDevices.getUserMedia({video:{width:20,height:20}, audio:true }).then(stream => {
             $('.my-video').get(0).srcObject = stream;
-            $('.my-video').attr("id",peer.id);
+            // $('.my-video').attr("id",peer.id);
             localStream = stream;
             room=peer.joinRoom(roomName,{mode:"sfu",stream:localStream});
             room.on('open',function(){
@@ -180,12 +190,15 @@
                   $("#alert").text(data.data.data);
                 }else if(data.data.label=="night_end_count"){
                   night_end_count++;
+                  console.log(night_end_count,room.peers);
+                  if (room.peers[data.src].post=="人狼") {
+                    $(".人狼").hide();
+                  }
                   if (night_end_count==Object.keys(room.peers).length-1 && peer.end) {
                     room.day++;
                     room.send({label:"day",data:room.day});
 
                     room.send({label:"startDay",data:""});
-                    change_and_send_alert(room,"お昼になりました。容疑者をえらびましょう");
                     Day(room,peer);
                     night_end_count=0;
                   }
@@ -194,6 +207,7 @@
                   if (day_end_count==Object.keys(room.peers).length-1 && peer.end) {
                     var max=0;
                     var dead_key="";
+                    console.log(room.kill_peer);
                     Object.keys(room.kill_peer).forEach(function (key) {
                       if (room.kill_peer[key]>=max) {
                         max=room.kill_peer[key];
@@ -209,6 +223,7 @@
                   }
                 }else if(data.data.label=="kill_peer"){
                   room.kill_peer[data.data.data]++;
+                  console.log(room,data);
                 }else if(data.data.label=="startDay"){
                   Day(room,peer);
                   night_end_count=0;
@@ -221,6 +236,7 @@
                 if (data.data.label=="day") {
                   if (data.data.data==0) {
                     $("#start").hide();
+                    room.day=0;
                     peer.post=room.peers[peer.id].post;
                     $("#post").text(peer.post);
                   }else{
@@ -298,92 +314,209 @@
     }
 
     function getDeadPeer(room) {
+      var res;
       Object.keys(room.peers).forEach(function (key) {
         if (room.peers[key].dead) {
-          return key;
+          res= key;
         }
       });
-      return false;
+      if (res) {
+        return res;
+      }else{
+        return false;
+      }
+    }
+
+    function ViewChange(str) {
+      var b_color;
+      var color;
+      if (str=="夜") {
+        var b_color="black";
+        var color="white";
+        $(".night").show();
+        $(".day").hide();
+      }else{
+        var b_color="white";
+        var color="black";
+        $(".day").show();
+        $(".night").hide();
+      }
+      $("body").animate(
+        {'color': color,
+          'backgroundColor': b_color
+        }, 1500
+      );
+      $("#day_night").text(str);
     }
 
     function Night(room,peer) {
+      if (!peer.isDay) {
+        return 0;
+      }else{
+        peer.isDay=false;
+      }
+      ViewChange("夜");
+      if (peer.dead) {
+        peer.end=true;
+        return 0;
+      }
+      $("#alert").text("夜になりました。");
+      debugger;
+      peer.end=false;
+
+      room.kill_peer=undefined;
+      delete room.kill_peer;
+
+
+      var dead_peer=getDeadPeer(room);
+      if (dead_peer){
+        delete room.peers[dead_peer];
+        console.log(dead_peer,room.peers);
+        room.send({label:"peers",data:room.peers});
+        if (dead_peer==peer.id) {
+          $("#alert").text("多数決の結果、あなたは殺されました");
+          dead_mode();
+          peer.dead=true;
+          peer.end=true;
+          return 0;
+        }else{
+          $("#alert").text(dead_peer+"が多数決で殺されました");
+          $("video#"+dead_peer).addClass("dead");
+          $("video#"+dead_peer).attr("muted","");
+        }
+      }
+
       set_select_box(room.peers,"#select");
       // 選択肢から自分を除く
       $("#select > [value="+peer.id+"]").remove();
 
-      $("body").animate(
-        {'color': 'white',
-          'backgroundColor': 'black'
-        }, 1500
-      );
-      $("#day_night").text("夜");
+      Object.keys(room.peers).forEach(function (key) {
+        // 自分と相手が人狼同士以外は隠す
+        if (!(peer.post=="人狼" && room.peers[key].post=="人狼")) {
+          $("video#"+key).hide();
+          $("video#"+key).attr("muted","");
+        }
+      });
 
-      if (peer.post=="人狼") {
-        $("#alert").text("人狼以外は映像・音声が見えません。食べる相手を選びましょう");
-        Object.keys(room.peers).forEach(function (key) {
-          if (room.peers[key].post!="人狼") {
-            $("video#"+key).hide();
-            $("video#"+key).attr("muted","");
-          }
-        });
-      }else{
-        $("#alert").text("夜になりました。");
-        $("video.other-peer").hide();
-        $("video.other-peer").attr("muted","");
-      }
+
       if (room.day>0) {
-        $("."+peer.post).show();
-        $("button.占い師").click(function(){
-          $(this).hide();
-          alert(room.peers[$("#select").val()].post);
-          room.send({label:"night_end_count",data:peer.id});
+        if (peer.post=="占い師" ||peer.post=="人狼") {
+          $("."+peer.post).show();
+          $("button.占い師").click(function(){
+            $(".night").hide();
+            alert(room.peers[$("#select").val()].post);
+            room.send({label:"night_end_count",data:peer.id});
+            peer.end=true;
+          })
+          $("button.人狼").click(function(){
+            $(".night").hide();
+            room.peers[$("#select").val()].dead=true;
+            room.send({label:"peers",data:room.peers});
+            room.send({label:"night_end_count",data:peer.id});
+            peer.end=true;
+          })
+        }else{
           peer.end=true;
-        })
-
-        $("button.人狼").click(function(){
-          $(this).hide();
-          room.peers[$("#select").val()].dead=true;
-          room.send({label:"peers",data:room.peers});
-          room.send({label:"night_end_count",data:peer.id});
-          peer.end=true;
-        })
+          setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
+        }
       }else{
         peer.end=true;
-        setTimeout(room.send({label:"night_end_count",data:peer.id}), 10*1000);
+        setTimeout(function () {room.send({label:"night_end_count",data:peer.id})}, 10*1000);
       }
+
+
     }
+    function dead_mode() {
+      $("#day_and_night").remove();
+      $("#dead").show();
+      $("video").show();
+    }
+
     function Day(room,peer) {
+      if (peer.isDay) {
+        return 0;
+      }else{
+        peer.isDay=true;
+      }
+      ViewChange("昼");
       peer.end=false;
-      $(".day").show();
-      $("#day_night").text("昼");
-      $("body").animate(
-        {'color': 'black',
-          'backgroundColor': 'white'
-        }, 1500
-      );
 
       var dead_peer=getDeadPeer(room);
       if (dead_peer) {
-        alert(dead_peer+"が殺された");
-        delete room.peers.dead_peer;
-        $("video#"+dead_peer).addClass("dead");
-        $("video#"+dead_peer).attr("muted","");
+        delete room.peers[dead_peer];
+        if (dead_peer==peer.id) {
+          $("#alert").text("あなたは人狼に殺されました");
+          dead_mode();
+          peer.dead=true;
+        }else{
+          alert(dead_peer+"が殺された");
+          console.log(dead_peer+"が殺された");
+          $("video#"+dead_peer).addClass("dead");
+          $("video#"+dead_peer).attr("muted","");
+        }
       }
-      room.kill_peer={};
+
+      if (end_judge(room.peers)) {
+        console.log("げーむ終了");
+        $("#alert").text(end_judge(room.peers));
+        $("#day_and_night").remove();
+        $("video").show();
+        $("video").attr("muted",false);
+        return 0;
+      }else{
+        $("#alert").text("容疑者を全員一致で決めてください");
+      }
+
+      if (peer.dead) {
+        peer.end=true;
+        return 0;
+      }
+
+
+      if (room.kill_peer==undefined) {
+        room.kill_peer={};
+        Object.keys(room.peers).forEach(function (key) {
+          room.kill_peer[key]=0;
+        });
+      }
+
       Object.keys(room.peers).forEach(function (key) {
-        room.kill_peer[key]=0;
         $("video#"+key).show();
         $("video#"+key).attr("muted","false");
       });
       set_select_box(room.peers,"#select_day");
+      $("#select_day > [value="+peer.id+"]").remove();
+
+
+
+
 
       $("#kill_peer").click(function(){
         $(".day").hide();
-        room.kill_peer[$("#select").val()]=1;
-        room.send({label:"kill_peer",data:$("#select").val()});
+        room.kill_peer[$("#select_day").val()]++;
+        room.send({label:"kill_peer",data:$("#select_day").val()});
         room.send({label:"day_end_count",data:peer.id});
         peer.end=true;
       })
+    }
+
+    function end_judge(peers) {
+      var wolf=0;
+      var other=0;
+      Object.keys(peers).forEach(function (key) {
+        if (peers[key].post=="人狼") {
+          wolf++;
+        }else{
+          other++;
+        }
+      });
+      if (wolf>=other) {
+        return "人狼側の勝利です。";
+      }else if (wolf==0) {
+        return "人間側の勝利です。"
+      }else{
+        return false;
+      }
     }
 
     function set_posts(int) {

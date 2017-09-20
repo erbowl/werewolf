@@ -209,7 +209,9 @@
                     peer.night_end_count=[];
                   }
                 }else if(data.data.label=="day_end_count"){
-                  peer.day_end_count.push(data.data.data);
+                  if (peer.day_end_count.indexOf(data.data.data)==-1) {
+                    peer.day_end_count.push(data.data.data);
+                  }
                   if (peer.day_end_count.length==Object.keys(room.game.peers).length && peer.end) {
                     var max=0;
                     var dead_key="";

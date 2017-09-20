@@ -401,7 +401,7 @@
       });
 
 
-      if (room.day>0) {
+      if (room.day>0 || peer.post=="占い師") {
         if (peer.post=="占い師" ||peer.post=="人狼") {
           $("."+peer.post).show();
           $("button.占い師").click(function(){

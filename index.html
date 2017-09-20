@@ -140,7 +140,7 @@
         var roomName=$("#room_id").val();
         const peer = new Peer($("#nickname").val(),{
           key:   "8cca2734-94ae-44fd-af8e-84a73633d9a4",
-          debug: 3
+          debug: 1
         });
         let localStream;
         let room;
@@ -188,6 +188,7 @@
                 stream_to_tag(stream);
               })
               room.on("data",function(data){
+                console.log(data);
                 if(data.data.label=="alert"){
                   $("#alert").text(data.data.data);
                 }else if(data.data.label=="night_end_count"){

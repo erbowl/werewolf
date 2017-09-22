@@ -61,13 +61,11 @@ $(function() {
             stream_to_tag(stream);
           })
           room.on("data",function(data){
-            console.log(data);
+
             if(data.data.label=="alert"){
               $("#alert").text(data.data.data);
             }else if(data.data.label=="night_end_count"){
               add_when_nothing(peer.night_end_count,data.data.data)
-              console.log(peer.night_end_count);
-
               if (room.game.peers[data.src].post=="人狼" && peer.post=="人狼") {
                 $(".人狼").hide();
               }
@@ -90,8 +88,6 @@ $(function() {
                 room.game.kill_peer[data.data.data]++;
               }
 
-              console.log("day_end_count",peer.day_end_count);
-
               if (peer.day_end_count.length==Object.keys(room.game.peers).length) {
                 var max=0;
                 var dead_key="";
@@ -101,7 +97,6 @@ $(function() {
                     dead_key=key;
                   }
                 });
-                console.log("殺される",room.game.kill_peer);
                 room.game["dead"]=dead_key;
                 room.send({label:"startNight",data:room.game});
 

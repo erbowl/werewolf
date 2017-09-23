@@ -116,7 +116,6 @@ $(function() {
             }else if(data.data.label=="startNight" && peer.isDay){
               peer.isDay=false;
               room.game=data.data.data;
-              console.log("startNight後",room);
 
               if (room.game.day==0) {
                 $("#start").hide();
@@ -131,7 +130,7 @@ $(function() {
             if (/^add_.*$/.test(data.data.label)) {
               var key=data.data.label.replace( /add_/g , "");
               room.game[key]=data.data.data;
-              console.log("add_後",room);
+
             }
           })
 

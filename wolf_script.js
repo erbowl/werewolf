@@ -60,8 +60,8 @@ $(function() {
             }
             stream_to_tag(stream);
           })
-          room.on("data",function(data){
 
+          room.on("data",function(data){
             if(data.data.label=="alert"){
               $("#alert").text(data.data.data);
             }else if(data.data.label=="night_end_count"){
@@ -110,11 +110,14 @@ $(function() {
             }else if(data.data.label=="startDay" && !peer.isDay){
               peer.isDay=true;
               room.game=data.data.data;
+
               Day(room,peer);
               peer.night_end_count=[];
             }else if(data.data.label=="startNight" && peer.isDay){
               peer.isDay=false;
               room.game=data.data.data;
+              console.log("startNight後",room);
+
               if (room.game.day==0) {
                 $("#start").hide();
                 peer.post=room.game.peers[peer.id].post;
@@ -128,6 +131,7 @@ $(function() {
             if (/^add_.*$/.test(data.data.label)) {
               var key=data.data.label.replace( /add_/g , "");
               room.game[key]=data.data.data;
+              console.log("add_後",room);
             }
           })
 

@@ -204,7 +204,7 @@ function set_select_box(peers,selecter) {
 }
 
 function getDeadPeer(room) {
-  if (room.game.dead && !room.game.guard) {
+  if (room.game.dead && room.game.dead!=room.game.guard) {
     return room.game.dead;
   }else{
     return false;

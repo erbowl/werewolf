@@ -68,7 +68,7 @@ $(function () {
 						Night(room, peer);
 					})
 					room.on("stream", function (stream) {
-						members.push(stream.peerId);
+            add_when_nothing(members,stream.peerId);
 						$("#p_c").text(members.length + 1);
 						if (members.length > 2) {
 							$("#start").removeClass("disabled");

@@ -111,7 +111,7 @@ $(function () {
 										max = room.game.kill_peer[key];
 										dead_key = key;
 									}
-								});								
+								});
 								room.game["dead"] = dead_key;
 								room.send({
 									label: "startNight",

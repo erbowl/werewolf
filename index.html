@@ -16,12 +16,15 @@
   </head>
   <body>
     <br>
-    <div class="alert alert-info" role="alert" id="alert">現在、準備中です</div>
-    <div class="start">
-      部屋の名前：<input value="" pattern="^[0-9A-Za-z]+$"id="room_id"><br>
-      自分の名前：<input pattern="^[A-Za-z]+$"id="nickname"><br>
-      <input type="submit" class="btn btn-info"name=""id="room_select" value="決定">
+    <div class="alert alert-info" role="alert" id="alert">同じ部屋の名前を入力して集合しよう。</div>
+    <div class="row">
+      <div class="start form-group col-md-6 col-md-offset-3">
+        部屋の名前：<input class="form-control"value="" pattern="^[0-9A-Za-z]+$"id="room_id"><br>
+        自分の名前：<input class="form-control"pattern="^[A-Za-z]+$"id="nickname"><br>
+        <input type="submit" class="btn btn-info"name=""id="room_select" value="決定">
+      </div>
     </div>
+
     <div class="info">
       <p/>現在：<span id="day_night">昼</span><p>
       <p>接続人数:<span id="p_c">1</span>人</p>

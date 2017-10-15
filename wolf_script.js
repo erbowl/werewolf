@@ -291,7 +291,11 @@ $(function () {
 				$("." + peer.post).show();
 				$("button.占い師").click(function () {
 					$(".night").hide();
-					alert(room.game.peers[$("#select").val()].post);
+					if(room.game.peers[$("#select").val()].post=="人狼"){
+						$("#alert").text($("#select").val()+"は人狼です。");
+					}else{
+						$("#alert").text($("#select").val()+"は人狼ではありません。");
+					}
 					setTimeout(function () {
 						room.send({
 							label: "night_end_count",

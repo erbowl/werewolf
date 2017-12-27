@@ -15,21 +15,52 @@
     <link rel="stylesheet" href="wolf.css">
   </head>
   <body>
-    <br>
+    <!-- <br> -->
+
     <div class="alert alert-info" role="alert" id="alert">同じ部屋の名前を入力して集合しよう。</div>
-    <div class="row">
-      <div class="start form-group col-md-6 col-md-offset-3">
-        部屋の名前：<input class="form-control"value="" pattern="^[0-9A-Za-z]+$"id="room_id"><br>
-        自分の名前：<input class="form-control"pattern="^[A-Za-z]+$"id="nickname"><br>
-        <input type="submit" class="btn btn-info"name=""id="room_select" value="決定">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-4 well">
+          <p class="text-center">役職一覧</p>
+          <ul>
+            <li>人狼：夜ターンに1人を食べることができる（初回夜から可能）</li>
+            <li>占い師：夜ターンに1人だけ人狼かどうか調べることができる</li>
+            <li>騎士：夜ターンに誰か1人を守ることができる（自分は不可）</li>
+          </ul>
+        </div>
+        <div class="start form-group col-sm-4">
+          部屋の名前：<input placeholder="アルファベットのみ入力可"class="form-control"value="" pattern="^[0-9A-Za-z]+$"id="room_id"><br>
+          自分の名前：<input placeholder="アルファベットのみ入力可"class="form-control"pattern="^[A-Za-z]+$"id="nickname"><br>
+          <input type="submit" class="btn btn-info center-block"name=""id="room_select" value="入室">
+          <br>
+          <div class="info well">
+            <p class="text-center">INFO</p>
+            <p>現在の部屋：<span id="room">未決定</span></p>
+            <p>あなたの名前：<span id="name">未決定</span></p>
+            <p>あなたの役職：<span id="post">未決定</span></p>
+            <p/>現在：<span id="day_night">昼</span><p>
+            <p>接続人数:<span id="p_c">1</span>人</p>
+          </div>
+          <button class="owner btn btn-info center-block"type="button" name="button" id="start">メンバーが揃ったらゲームスタート</button>
+          <br>
+          <div id="dead">
+            <p>死亡</p>
+          </div>
+
+
+        </div>
+        <div class="col-sm-4">
+          <div id="peers" class="well">
+            <p class="text-center">参加者一覧</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="info">
-      <p/>現在：<span id="day_night">昼</span><p>
-      <p>接続人数:<span id="p_c">1</span>人</p>
-    </div>
-    <button class="owner btn btn-info"type="button" name="button" id="start">揃ったらゲームスタート</button>
+
+
+
     <div id="day_and_night">
       <div class="night">
         <select id="select" class="人狼 占い師 騎士 form-control" >
@@ -44,23 +75,18 @@
         <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
       </div>
     </div>
-    <div id="dead">
-      <p>死亡</p>
-    </div>
+
+
     <div id='my-video_div'>
-      <p>現在の部屋：<span id="room">未決定</span></p>
-      <p>あなたの名前：<span id="name">未決定</span></p>
-      <p>あなたの役職：<span id="post">未決定</span></p>
       <video  class='my-video' autoplay muted></video>
     </div>
-    <div id="peers">
-      <p>参加者一覧</p>
+    <div class="audio">
+      <audio id="se_chicken" preload="auto">
+    	  <source src="/chicken.mp3" type="audio/mp3">
+      </audio>
+      <audio id="se_wolf" preload="auto">
+    	  <source src="/wolf.mp3" type="audio/mp3">
+      </audio>
     </div>
-    <audio id="se_chicken" preload="auto">
-  	  <source src="/chicken.mp3" type="audio/mp3">
-    </audio>
-    <audio id="se_wolf" preload="auto">
-  	  <source src="/wolf.mp3" type="audio/mp3">
-    </audio>
   </body>
 </html>

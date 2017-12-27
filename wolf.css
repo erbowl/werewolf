@@ -25,11 +25,11 @@ video.other-peer:hover{
  text-align: center;
 }
 #peers{
- position: absolute;
+ /*position: absolute;
  right:0px;
  bottom:0px;
  height: 200px;
- width: 300px;
+ width: 300px;*/
 }
 #select,#select_day{
  width: 300px

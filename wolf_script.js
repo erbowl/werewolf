@@ -1,7 +1,7 @@
 $(function () {
 	$("#room_select").click(function () {
 		if ($("#room_id").val() == "" || $("#nickname").val() == "") {
-			alert("入力してください");
+			alert("すべての項目を入力してください");
 			return 0;
 		} else if (!/^[a-zA-Z][a-zA-Z0-9]+$/.test($("#nickname").val())) {
 			alert("ニックネームには半角英字のみ使用可能です");

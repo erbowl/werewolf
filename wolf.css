@@ -40,3 +40,12 @@ video.other-peer:hover{
 .dead{
  opacity: 0.2;
 }
+
+body.night_body{
+  /*color:white;*/
+  background-color:black;
+}
+body.day_body{
+  /*color:black;*/
+  background-color:white;
+}

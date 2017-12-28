@@ -21,13 +21,19 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-sm-4 well">
-          <p class="text-center">役職一覧</p>
-          <ul>
-            <li>人狼：夜ターンに1人を食べることができる（初回夜から可能）</li>
-            <li>占い師：夜ターンに1人だけ人狼かどうか調べることができる</li>
-            <li>騎士：夜ターンに誰か1人を守ることができる（自分は不可）</li>
-          </ul>
+        <div class="col-sm-4">
+          <div>
+            <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+            <!-- 1カラム目 -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-1649257785567720"
+                 data-ad-slot="7504599519"
+                 data-ad-format="auto"></ins>
+            <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </div>
         </div>
         <div class="col-sm-4">
           <div class="start form-group ">
@@ -35,16 +41,26 @@
             自分の名前：<input placeholder="アルファベットのみ入力可"class="form-control"pattern="^[A-Za-z]+$"id="nickname"><br>
             <input type="submit" class="btn btn-info center-block"name=""id="room_select" value="入室">
           </div>
-          <!-- <br> -->
-          <div class="info well">
-            <p class="text-center">INFO</p>
-            <p>現在の部屋：<span id="room">未決定</span></p>
-            <p>あなたの名前：<span id="name">未決定</span></p>
-            <p>あなたの役職：<span id="post">未決定</span></p>
-            <p/>現在：<span id="day_night">昼</span><p>
-            <p>接続人数:<span id="p_c">1</span>人</p>
-          </div>
+
           <button class="owner btn btn-info center-block"type="button" name="button" id="start">メンバーが揃ったらゲームスタート</button>
+
+          <div id="day_and_night">
+            <div class="night">
+              <select id="select" class="人狼 占い師 騎士 form-control" >
+              </select>
+              <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
+              <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
+              <button class="騎士 btn btn-info"type="button" name="button">を守る</button>
+            </div>
+            <div class="day">
+              <select id="select_day" class="form-control" >
+              </select>
+              <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
+            </div>
+          </div>
+
+
+
           <br>
           <div id="dead">
             <p>死亡</p>
@@ -53,41 +69,38 @@
 
         </div>
         <div class="col-sm-4">
+          <div class="info well">
+            <p class="text-center">INFO</p>
+            <p>現在の部屋：<span id="room">未決定</span></p>
+            <p>あなたの名前：<span id="name">未決定</span></p>
+            <p>あなたの役職：<span id="post">未決定</span></p>
+            <p/>現在：<span id="day_night">昼</span><p>
+            <p>接続人数:<span id="p_c">1</span>人</p>
+          </div>
           <div id="peers" class="well">
             <p class="text-center">参加者一覧</p>
+          </div>
+          <div class="well">
+            <p class="text-center">役職一覧</p>
+            <ul>
+              <li>人狼：夜ターンに1人を食べることができる（初回夜から可能）</li>
+              <li>占い師：夜ターンに1人だけ人狼かどうか調べることができる</li>
+              <li>騎士：夜ターンに誰か1人を守ることができる（自分は不可）</li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
-
-
-
-
-    <div id="day_and_night">
-      <div class="night">
-        <select id="select" class="人狼 占い師 騎士 form-control" >
-        </select>
-        <button class="人狼 btn btn-info"type="button" name="button">を食べる</button>
-        <button class="占い師 btn btn-info"type="button" name="button">を占う</button>
-        <button class="騎士 btn btn-info"type="button" name="button">を守る</button>
-      </div>
-      <div class="day">
-        <select id="select_day" class="form-control" >
-        </select>
-        <button id="kill_peer"class="btn btn-info"type="button" name="button">を殺すに一票</button>
-      </div>
-    </div>
-
 
     <div id='my-video_div'>
       <video  class='my-video' autoplay muted></video>
     </div>
     <div class="audio">
       <audio id="se_chicken" preload="auto">
-    	  <source src="/chicken.mp3" type="audio/mp3">
+    	  <source src="./chicken.mp3" type="audio/mp3">
       </audio>
       <audio id="se_wolf" preload="auto">
-    	  <source src="/wolf.mp3" type="audio/mp3">
+    	  <source src="./wolf.mp3" type="audio/mp3">
       </audio>
     </div>
   </body>

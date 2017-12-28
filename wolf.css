@@ -1,3 +1,6 @@
+ul{
+  padding-left: 20px;
+}
 video.other-peer{
     object-fit: cover;
     border: 4px solid black;
@@ -48,4 +51,7 @@ body.night_body{
 body.day_body{
   /*color:black;*/
   background-color:white;
+}
+#start{
+  display: none;
 }

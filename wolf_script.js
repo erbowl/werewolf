@@ -8,6 +8,7 @@ $(function () {
 			return 0;
 		}
 		$(".start").hide();
+		$("#start").show();
 		$("#room").text($("#room_id").val());
 		$("#name").text($("#nickname").val());
 		var roomName = $("#room_id").val();

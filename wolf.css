@@ -1,3 +1,6 @@
+ul{
+  padding-left: 20px;
+}
 video.other-peer{
     object-fit: cover;
     border: 4px solid black;
@@ -39,4 +42,16 @@ video.other-peer:hover{
 }
 .dead{
  opacity: 0.2;
+}
+
+body.night_body{
+  /*color:white;*/
+  background-color:black;
+}
+body.day_body{
+  /*color:black;*/
+  background-color:white;
+}
+#start{
+  display: none;
 }

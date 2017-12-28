@@ -8,6 +8,7 @@ $(function () {
 			return 0;
 		}
 		$(".start").hide();
+		$("#start").show();
 		$("#room").text($("#room_id").val());
 		$("#name").text($("#nickname").val());
 		var roomName = $("#room_id").val();
@@ -227,23 +228,19 @@ $(function () {
 		var color;
 		var sound_id;
 		if (str == "夜") {
-			b_color = "black";
-			color = "white";
 			sound_id = "se_wolf";
 			$(".night").show();
 			$(".day").hide();
+			$("body").addClass("night_body");
+			$("body").removeClass("day_body");
 		} else {
-			b_color = "white";
-			color = "black";
 			sound_id = "se_chicken";
 			$(".day").show();
 			$(".night").hide();
+			$("body").addClass("day_body");
+			$("body").removeClass("night_body");
 		}
 		document.getElementById(sound_id).play();
-		$("body").animate({
-			'color': color,
-			'backgroundColor': b_color
-		}, 1500);
 		$("#day_night").text(str);
 	}
 

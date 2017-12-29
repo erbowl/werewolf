@@ -9,6 +9,7 @@ video.other-peer{
     border-radius: 300px;
     text-align: center;
     display: none;
+    position: fixed;
 }
 video.other-peer:hover{
   cursor: move;

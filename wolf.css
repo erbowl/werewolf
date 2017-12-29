@@ -1,6 +1,8 @@
 nav{
   height: 45px;
   line-height: 45px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid  #b8b8b8;
 }
 nav p{
   font-size: 24px;

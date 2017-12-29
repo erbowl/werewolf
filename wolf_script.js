@@ -188,7 +188,7 @@ $(function () {
 	function stream_to_tag(stream) {
 		if ($("video#" + stream.peerId).length == 0) {
 			$video = $("<video>");
-			$("body").append($video);
+			$("div.info.well").append($video);
 			$video.attr("src", window.URL.createObjectURL(stream));
 			$video.attr("id", stream.peerId);
 			$video.attr("class", "other-peer");

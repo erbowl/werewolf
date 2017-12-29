@@ -1,3 +1,7 @@
+nav{
+  height: 45px;
+  line-height: 45px;
+}
 nav p{
   font-size: 24px;
 }
@@ -65,12 +69,12 @@ html {
   position: relative;
 }
 body {
-  margin-bottom: 150px;
+  margin-bottom: 180px;
 }
 footer {
   width: 100%;
   bottom: 0;
-  height: 150px;
+  height: 180px;
   position: absolute;
   background-color: #b8b8b8;
   line-height:60px;
@@ -84,7 +88,9 @@ footer li {
   display:inline;
   padding-left:10px;
   padding-right:5px;
+  font-size: 10px;
 }
+
 footer li+li {
   border-left:1px solid #000000;
 }
